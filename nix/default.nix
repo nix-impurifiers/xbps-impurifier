@@ -5,6 +5,7 @@ let
   core = import (coreSrc + "/nix") {
     inherit pkgs;
     namespace = "xbps-impurifier";
+    sourceInfo = coreSrc;
   };
   architecture =
     if pkgs.stdenv.hostPlatform.isx86_64 then
@@ -150,7 +151,10 @@ let
         installScript
         removeScript
         ;
-      dependencies = [ "xbps-impurifier>=0.1.0_1" ] ++ lib.optionals payload.hostEnabled hostDeps;
+      dependencies = [
+        "xbps-impurifier>=${core.runtimeVersion}_1"
+      ]
+      ++ lib.optionals (payload.hostEnabled || (args.hostDependencies or null) != null) hostDeps;
     };
   makeRuntimeXbps =
     {
@@ -159,7 +163,7 @@ let
     }:
     buildXbps {
       name = "xbps-impurifier";
-      version = "0.1.0";
+      version = core.runtimeVersion;
       payload = core.makeRuntimeTree { };
       license = "MIT";
       dependencies = [
@@ -185,7 +189,12 @@ let
     '';
 in
 {
-  inherit (core) engine offlineCache unit;
+  inherit (core)
+    engine
+    offlineCache
+    unit
+    runtimeVersion
+    ;
   inherit
     buildXbps
     makeXbps

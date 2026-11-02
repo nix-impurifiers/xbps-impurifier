@@ -92,3 +92,5 @@ supervisor attachment and recovery, cooperating driver upgrades and GC.
 
 The fixture runs actual XBPS and runit under NixOS with a preinstalled Nix/Python
 runtime. It does not claim to boot a complete Void installation or install Nix.
+
+The exported `runtimeVersion` follows the pinned core source timestamp. Application dependencies require that runtime version or newer, rather than accepting every engine as `0.1.0`. This supports ordinary native engine upgrades without project release tags. Consumer-provided Nix dependency expressions remain independent of the engine's own native version.

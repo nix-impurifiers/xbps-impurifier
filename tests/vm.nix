@@ -100,6 +100,7 @@ let
       '';
     };
   hardware = impurifier.makeOfflineXbps {
+    hostDependencies = [ "impurifier-host-driver>=0" ];
     pkg = hardwareFixture.tool;
     inherit (hardwareFixture) hardware;
   };
@@ -224,6 +225,8 @@ pkgs.testers.runNixOSTest {
         machine.succeed("sv up /var/service/passive-service; xbps-remove -y passive-service")
         machine.fail("sv status /etc/sv/passive-service | grep '^run:'")
     with subtest("cooperating native driver upgrades refresh snapshots"):
+        code, output = machine.execute(xbps + "-R ${repository [ hardware ]} hardware-tool 2>&1")
+        assert code != 0 and "impurifier-host-driver" in output, output
         install("${
           repository [
             (hostDriver "1")
