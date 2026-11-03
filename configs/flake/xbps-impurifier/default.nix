@@ -29,9 +29,25 @@
         hello-offline-xbps = impurifier.makeOfflineXbps { pkg = pkgs.hello; };
       };
       formatter = pkgs.nixfmt-tree;
-      checks = import ../../../tests {
-        inherit pkgs impurifier;
-        coreSrc = inputs.impurifier;
-      };
+      checks =
+        (import ../../../tests {
+          inherit pkgs impurifier;
+          coreSrc = inputs.impurifier;
+        })
+        // {
+          bundled-vm = import ../../../tests/vm.nix {
+            inherit pkgs;
+            hardwareFixture = import (inputs.impurifier + "/tests/hardware-fixture.nix") { inherit pkgs; };
+            bundled = true;
+            impurifier = impurifier // {
+              runtimeXbps = impurifier.makeRuntimeXbps {
+                bundledNixStore = "${
+                  import (inputs.impurifier + "/tests/static-nix.nix") { inherit pkgs; }
+                }/bin/nix-store";
+                bundledNixNotices = [ "${pkgs.nix.src}/COPYING" ];
+              };
+            };
+          };
+        };
     };
 }

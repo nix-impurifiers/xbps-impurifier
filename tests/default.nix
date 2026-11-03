@@ -21,6 +21,7 @@ let
   };
 in
 {
+  native-vm = import ./native-vm.nix { inherit pkgs impurifier coreSrc; };
   template-vm = import ./template-vm.nix { inherit pkgs impurifier; };
   unit = impurifier.unit;
   emitter = pkgs.runCommand "xbps-impurifier-contract" { nativeBuildInputs = [ pkgs.xbps ]; } ''

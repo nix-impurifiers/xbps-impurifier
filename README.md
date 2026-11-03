@@ -121,3 +121,25 @@ The fixture runs actual XBPS and runit under NixOS with a preinstalled Nix/Pytho
 runtime. It does not claim to boot a complete Void installation or install Nix.
 
 The exported `runtimeVersion` follows the pinned core source timestamp. Application dependencies require that runtime version or newer, rather than accepting every engine as `0.1.0`. This supports ordinary native engine upgrades without project release tags. Consumer-provided Nix dependency expressions remain independent of the engine's own native version.
+
+### Native payloads without target-side Nix
+
+`makeNativePackages { pkg; name ? pkg.pname; version ? pkg.version; ... }`
+exports the complete closure as native-owned XBPS packages at its original store
+paths. Each immutable object has one native package and exact reference
+requirements. The application package owns command links. `programs` defaults to the main
+command; use `[]` for a dependency-only payload. `binDir` defaults to `/usr/bin`.
+Native XBPS handles
+installation, checksums, dependencies, upgrades and orphan removal; these payloads
+need no Nix executable, daemon or database. Keep native-owned objects separate
+from a Nix-managed store and its garbage collection. This does not relocate files.
+For producer-prepared system/prefix layouts, the existing `buildXbps { payload;
+name; version; ... }` emits a native package without implicit impurifier hooks
+or runtime requirements.
+
+`makeRuntimeXbps` additionally accepts `bundledNixStore` and
+`bundledNixNotices`. The supplied client must be a static ELF executable, and
+upstream notices must be included. Bundling omits the default external Nix
+dependency, retains Python, and uses the actual package architecture. A compatible
+external client takes precedence; a failed operation is never retried through a
+different client or store. This is a client bundle, not a Nix installer.

@@ -98,6 +98,21 @@ let
           ../root
         cp *.xbps "$out"
       '';
+  makeNativePackages =
+    args:
+    let
+      trees = core.makeNativeTrees args;
+    in
+    pkgs.runCommand "native-owned-xbps-collection"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.xbps
+        ];
+      }
+      ''
+        python3 ${./native-xbps.py} ${trees} "$out" ${architecture}
+      '';
   installScript = pkgs.writeText "xbps-impurifier-INSTALL" ''
     #!/bin/sh
     set -eu
@@ -167,18 +182,18 @@ let
     };
   makeRuntimeXbps =
     {
-      nixDependency ? "nix>=0",
+      bundledNixStore ? null,
+      bundledNixNotices ? [ ],
+      nixDependency ? (if bundledNixStore == null then "nix>=0" else null),
       pythonDependency ? "python3>=0",
     }:
     buildXbps {
       name = "xbps-impurifier";
       version = core.runtimeVersion;
-      payload = core.makeRuntimeTree { };
+      payload = core.makeRuntimeTree { inherit bundledNixStore bundledNixNotices; };
+      architecture = if bundledNixStore == null then "noarch" else architecture;
       license = "MIT";
-      dependencies = [
-        nixDependency
-        pythonDependency
-      ];
+      dependencies = lib.optional (nixDependency != null) nixDependency ++ [ pythonDependency ];
       inherit installScript;
     };
   makeTemplate =
@@ -228,6 +243,7 @@ in
     ;
   inherit
     buildXbps
+    makeNativePackages
     makeXbps
     makeRuntimeXbps
     makeRepository
