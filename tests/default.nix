@@ -21,6 +21,7 @@ let
   };
 in
 {
+  template-vm = import ./template-vm.nix { inherit pkgs impurifier; };
   unit = impurifier.unit;
   emitter = pkgs.runCommand "xbps-impurifier-contract" { nativeBuildInputs = [ pkgs.xbps ]; } ''
     XBPS_ARCH=x86_64 xbps-query -C /dev/null -R --repository=${repository} -p pkgver hello | grep '^hello-2.12.3_1$'

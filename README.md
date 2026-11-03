@@ -37,6 +37,33 @@ keeps native dependency policy under consumer control. An existing Nix/Python
 runtime is required. Providing Nix through an impure native package is deferred
 installer work, not excluded from the project.
 
+## xbps-src templates
+
+`makeTemplate { package = app.offline; sourceUrl = "https://example.org/hello.xbps"; }`
+returns a native `template` and its original `INSTALL`/`REMOVE` inputs. Copy
+these into `void-packages/srcpkgs/<native-package-name>/`, then run ordinary
+`./xbps-src pkg <native-package-name>`. Publish the referenced XBPS artifact
+at that URL first. The generated SHA256 checksum pins the exact artifact.
+
+The recipe reads dependencies, provides, conflicts, replacements and protected
+configuration from actual XBPS metadata. Native xbps-src verifies the download,
+extracts the payload, regenerates package metadata and wraps the lifecycle
+scripts. It preserves application payload bytes; compilation stays in Nix.
+Stripping and automatic ELF dependency discovery are disabled because Nix
+closures own those dependencies. The original native runtime requirements remain
+enforced by XBPS. An original `noarch` artifact permits all xbps-src target
+architectures; xbps-src emits its normal architecture-specific package.
+
+The additional producer/consumer VM uses a pinned, complete upstream
+void-packages tree and its native `ethereal` mode inside a disposable NixOS
+VM. Actual SDK programs supply the FHS tool paths; upstream build hooks and
+transaction clients are unchanged. `-I` skips source-build dependency setup
+in that SDK fixture; a separate native install verifies missing runtime
+requirements are rejected. The VM checks source corruption, native net/offline
+recipe builds, two versions, configuration protection, package verification,
+ordinary-user launch and GC retention/release. It does not claim a complete
+Void bootstrap, cross compilation or remote package publication.
+
 ## Host integration
 
 `configFiles`, `files`, `users`, `directories`, `lifecycle`, and `hardware` use the

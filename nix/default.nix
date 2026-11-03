@@ -181,6 +181,28 @@ let
       ];
       inherit installScript;
     };
+  makeTemplate =
+    { package, sourceUrl }:
+    assert lib.assertMsg (
+      builtins.isString sourceUrl
+      && (lib.hasPrefix "https://" sourceUrl || lib.hasPrefix "http://" sourceUrl)
+      && !(lib.hasInfix "\n" sourceUrl)
+      && !(lib.hasInfix "\r" sourceUrl)
+      && !(lib.hasInfix ">" sourceUrl)
+    ) "sourceUrl must be an HTTP(S) artifact URL";
+    pkgs.runCommand "impurifier-xbps-template"
+      {
+        nativeBuildInputs = [
+          pkgs.python3
+          pkgs.libarchive
+        ];
+        __structuredAttrs = true;
+        unsafeDiscardReferences.out = true;
+        options = pkgs.writeText "template-options.json" (builtins.toJSON { inherit sourceUrl; });
+      }
+      ''
+        python3 ${./template.py} ${package} "$options" "$out"
+      '';
   makeRepository =
     {
       packages,
@@ -209,6 +231,7 @@ in
     makeXbps
     makeRuntimeXbps
     makeRepository
+    makeTemplate
     ;
   runtimeXbps = makeRuntimeXbps { };
   makeNetXbps = args: makeXbps (args // { offline = false; });
